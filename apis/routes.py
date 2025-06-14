@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, current_app
 from utils.load_model import load_model_and_tokenizer
 from utils.validators import validate_input
+from flasgger.utils import swag_from
 import torch
 
 # Initialize blueprint
@@ -20,6 +21,36 @@ def internal_server_error(error):
 
 # Predict api for sentiment analysis
 @api_blueprint.route('/predict', methods=['POST'])
+@swag_from({
+    'consumes': ['application/json'],
+    'parameters': [
+        {
+            'in': 'body',
+            'name': 'body',
+            'required': True,
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'review': {
+                        'type': 'string',
+                        'example': 'the food was good'
+                    }
+                },
+                'required': ['review']
+            }
+        }
+    ],
+    'responses': {
+        200: {
+            'description': 'Prediction result',
+            'examples': {
+                'application/json': {
+                    'prediction': 'positive'
+                }
+            }
+        }
+    }
+})
 def predict():
     try:
         # Validate input

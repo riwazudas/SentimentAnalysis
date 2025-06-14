@@ -3,8 +3,17 @@ from apis.routes import api_blueprint
 import logging
 from logging.handlers import RotatingFileHandler
 import os
+from flasgger import Swagger
 
 app = Flask(__name__)
+swagger = Swagger(app, template={
+    "swagger": "2.0",
+    "info": {
+        "title": "Sentiment Analysis API",
+        "description": "API for predicting sentiment using BERT",
+        "version": "1.0.0"
+    }
+})
 
 # Register blueprints
 app.register_blueprint(api_blueprint, url_prefix='/api')
@@ -20,6 +29,13 @@ app.logger.addHandler(handler)
 # Setup default page
 @app.route('/', methods=['GET'])
 def home():
+    """
+    Welcome Route
+    ---
+    responses:
+      200:
+        description: Sentiment Analysis API is up and running!
+    """
     return {"message": "Sentiment Analysis API is up and running!"}
 
 if __name__ == '__main__':
