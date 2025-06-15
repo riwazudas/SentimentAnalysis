@@ -4,8 +4,11 @@ import logging
 from logging.handlers import RotatingFileHandler
 import os
 from flasgger import Swagger
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
+
 swagger = Swagger(app, template={
     "swagger": "2.0",
     "info": {
