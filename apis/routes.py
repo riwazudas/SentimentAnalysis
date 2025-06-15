@@ -45,7 +45,8 @@ def internal_server_error(error):
             'description': 'Prediction result',
             'examples': {
                 'application/json': {
-                    'prediction': 'positive'
+                    'sentiment': 'positive',
+                    'confidence': 98.7
                 }
             }
         }
@@ -53,7 +54,6 @@ def internal_server_error(error):
 })
 def predict():
     try:
-        # Validate input
         data = request.get_json()
         error = validate_input(data)
 
@@ -61,26 +61,23 @@ def predict():
             return jsonify({'error': error}), 400
 
         text = data['review']
-
-        # Tokenize the input
         inputs = tokenizer(text, return_tensors="pt", padding=True, truncation=True, max_length=512)
 
-        # Make predictions
-        review = "Negative"
         with torch.no_grad():
             outputs = model(**inputs)
             logits = outputs.logits
-            predicted_class = torch.argmax(logits, dim=-1).item()
-            if predicted_class == 1:
-                review = "Positive"
+            probabilities = torch.nn.functional.softmax(logits, dim=1)
+            confidence = torch.max(probabilities).item() * 100
+            predicted_class = torch.argmax(probabilities, dim=-1).item()
+            review = "Positive" if predicted_class == 1 else "Negative"
 
-        # Log the request and response
-        current_app.logger.info(f"Review: {text}, Sentiment: {review}")
+        current_app.logger.info(f"Review: {text}, Sentiment: {review}, Confidence: {confidence:.2f}%")
 
-        # Return the result
-        return jsonify({'sentiment': review})
+        return jsonify({
+            'sentiment': review,
+            'confidence': round(confidence, 2)
+        })
 
     except Exception as e:
-        # Log error
         current_app.logger.error(f"Error occurred: {str(e)}")
         return jsonify({"error": "An error occurred while processing the request."}), 500
